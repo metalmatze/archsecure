@@ -1,23 +1,17 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"strings"
 
+	"os/exec"
+
 	"github.com/PuerkitoBio/goquery"
 )
 
-func main() {
-	issues, err := ListIssues()
-	if err != nil {
-		log.Println(err)
-	}
-
-	for _, i := range issues {
-		fmt.Printf("%+v\n", i)
-	}
-}
+// Structs
 
 type Issue struct {
 	Group    string
@@ -31,7 +25,51 @@ type Issue struct {
 	Advisory string
 }
 
+type Package struct {
+	Name    string
+	Version string
+}
+
+// Functions
+
+func main() {
+
+	// Fetch all currently listed issues from Arch Linux's
+	// security issues tracker.
+	issues, err := ListIssues()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Retrieve all locally installed packages including
+	// the specific version installed.
+	installedPkgs, err := ListPackages()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("\nKNOWN ISSUES:\n-------------\n\n")
+	for _, i := range issues {
+		fmt.Printf("%+v\n", i)
+	}
+	fmt.Println()
+
+	fmt.Printf("\nINSTALLED PKGS (OFFICIAL REPOSITORIES):\n---------------------------------------\n\n")
+	for index, p := range installedPkgs {
+
+		if index < 100 {
+			fmt.Printf("%+v\n", p)
+		} else if index == 100 {
+			fmt.Printf("... (showing: 100, in total: %d) ...\n", len(installedPkgs))
+		}
+	}
+	fmt.Println()
+}
+
 func ListIssues() ([]Issue, error) {
+
+	// Fetch content of security tracker website and
+	// make it available to goquery parser.
 	doc, err := goquery.NewDocument("https://security.archlinux.org/")
 	if err != nil {
 		return nil, err
@@ -73,4 +111,55 @@ func ListIssues() ([]Issue, error) {
 	})
 
 	return issues, nil
+}
+
+func ListPackages() ([]Package, error) {
+
+	var pacmanOutput bytes.Buffer
+
+	// Prepare a pacman query to retrieve installed packages.
+	pacmanQuery := exec.Command("pacman", "-Qs")
+	pacmanQuery.Stdout = &pacmanOutput
+
+	// Run query.
+	err := pacmanQuery.Run()
+	if err != nil {
+		return nil, err
+	}
+
+	// Trim possibly leading and trailing space.
+	pkgsListRaw := strings.TrimSpace(pacmanOutput.String())
+
+	// Split at newline.
+	pkgsList := strings.Split(pkgsListRaw, "\n")
+
+	// Reserve space for final package list.
+	pkgs := make([]Package, 0, (len(pkgsList) / 2))
+
+	for _, pkgLine := range pkgsList {
+
+		if strings.HasPrefix(pkgLine, "    ") != true {
+
+			// This is not a package's description line because
+			// it does not begin with an indentation. Proceed.
+
+			// Split at space to remove additional information.
+			pkgData := strings.Split(pkgLine, " ")
+
+			// Again, split first part of package name to remove
+			// its membership to package repositories.
+			pkgName := strings.Split(pkgData[0], "/")
+
+			// Now, we can create a new Package struct.
+			pkg := Package{
+				Name:    pkgName[1],
+				Version: pkgData[1],
+			}
+
+			// And append it to final pkgs list.
+			pkgs = append(pkgs, pkg)
+		}
+	}
+
+	return pkgs, nil
 }
