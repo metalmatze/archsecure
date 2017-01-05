@@ -12,22 +12,33 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-type Issue struct {
-	Group    string
-	CVE      []string
-	Package  []string
-	Version  string
-	Fixed    string
-	Severity string
-	Status   string
-	Ticket   string
-	Advisory string
-}
+type (
+	Link struct {
+		URL  string
+		Text string
+	}
 
-type Package struct {
-	Name    string
-	Version string
-}
+	Issue struct {
+		Group    Link
+		CVE      []Link
+		Package  []Link
+		Version  string
+		Fixed    string
+		Severity Severity
+		Status   Status
+		Ticket   Link
+		Advisory Link
+	}
+
+	Package struct {
+		Name    string
+		Version string
+	}
+)
+
+const (
+	URL = "https://security.archlinux.org"
+)
 
 func main() {
 	issues, err := ListIssues()
@@ -43,20 +54,21 @@ func main() {
 	const padding = 3
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', tabwriter.TabIndent)
 
-	fmt.Fprintln(w, "Package\tVersion\tFixed\tSeverity\tStatus\tGroup")
+	fmt.Fprintln(w, "Package\tVersion\tFixed\tSeverity\tStatus\tGroup\tLink")
 
 	for _, pkg := range installedPkgs {
 		for _, issue := range issues {
 			for _, issuePkg := range issue.Package {
-				if pkg.Name == issuePkg && pkg.Version == issue.Version {
+				if pkg.Name == issuePkg.Text && pkg.Version == issue.Version {
 					fmt.Fprintf(w,
-						"%s\t%s\t%s\t%s\t%s\t%s\n",
+						"%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
 						pkg.Name,
 						pkg.Version,
 						issue.Fixed,
-						issue.Severity,
-						issue.Status,
-						issue.Group,
+						issue.Severity.Term(),
+						issue.Status.Term(),
+						issue.Group.Text,
+						URL+issue.Group.URL,
 					)
 				}
 			}
@@ -68,7 +80,7 @@ func main() {
 func ListIssues() ([]Issue, error) {
 	// Fetch content of security tracker website and
 	// make it available to goquery parser.
-	doc, err := goquery.NewDocument("https://security.archlinux.org/")
+	doc, err := goquery.NewDocument(URL)
 	if err != nil {
 		return nil, err
 	}
@@ -81,14 +93,14 @@ func ListIssues() ([]Issue, error) {
 		s.Children().Each(func(j int, ss *goquery.Selection) {
 			switch j {
 			case 0:
-				issue.Group = strings.TrimSpace(ss.Text())
+				issue.Group = SelectionToLink(ss.Find("a"))
 			case 1:
 				ss.Find("a").Each(func(k int, cveLink *goquery.Selection) {
-					issue.CVE = append(issue.CVE, cveLink.Text())
+					issue.CVE = append(issue.CVE, SelectionToLink(cveLink))
 				})
 			case 2:
-				ss.Find("a").Each(func(k int, packageLink *goquery.Selection) {
-					issue.Package = append(issue.Package, packageLink.Text())
+				ss.Find("a").Each(func(k int, pkgLink *goquery.Selection) {
+					issue.Package = append(issue.Package, SelectionToLink(pkgLink))
 				})
 			case 3:
 				issue.Version = strings.TrimSpace(ss.Text())
@@ -99,9 +111,9 @@ func ListIssues() ([]Issue, error) {
 			case 6:
 				issue.Status = strings.TrimSpace(ss.Text())
 			case 7:
-				issue.Ticket = strings.TrimSpace(ss.Text())
+				issue.Ticket = SelectionToLink(ss.Find("a"))
 			case 8:
-				issue.Advisory = strings.TrimSpace(ss.Text())
+				issue.Advisory = SelectionToLink(ss.Find("a"))
 			}
 		})
 
@@ -109,6 +121,15 @@ func ListIssues() ([]Issue, error) {
 	})
 
 	return issues, nil
+}
+
+func SelectionToLink(s *goquery.Selection) Link {
+	href, _ := s.Attr("href")
+
+	return Link{
+		URL:  href,
+		Text: strings.TrimSpace(s.Text()),
+	}
 }
 
 func ListPackages() ([]Package, error) {
