@@ -107,9 +107,9 @@ func ListIssues() ([]Issue, error) {
 			case 4:
 				issue.Fixed = strings.TrimSpace(ss.Text())
 			case 5:
-				issue.Severity = strings.TrimSpace(ss.Text())
+				issue.Severity = Severity(strings.TrimSpace(ss.Text()))
 			case 6:
-				issue.Status = strings.TrimSpace(ss.Text())
+				issue.Status = Status(strings.TrimSpace(ss.Text()))
 			case 7:
 				issue.Ticket = SelectionToLink(ss.Find("a"))
 			case 8:
