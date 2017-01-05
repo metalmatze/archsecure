@@ -4,14 +4,11 @@ import (
 	"bytes"
 	"fmt"
 	"log"
-	"strings"
-
 	"os/exec"
+	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 )
-
-// Structs
 
 type Issue struct {
 	Group    string
@@ -29,8 +26,6 @@ type Package struct {
 	Name    string
 	Version string
 }
-
-// Functions
 
 func main() {
 
@@ -67,7 +62,6 @@ func main() {
 }
 
 func ListIssues() ([]Issue, error) {
-
 	// Fetch content of security tracker website and
 	// make it available to goquery parser.
 	doc, err := goquery.NewDocument("https://security.archlinux.org/")
@@ -114,31 +108,26 @@ func ListIssues() ([]Issue, error) {
 }
 
 func ListPackages() ([]Package, error) {
-
-	var pacmanOutput bytes.Buffer
+	var buf bytes.Buffer
 
 	// Prepare a pacman query to retrieve installed packages.
-	pacmanQuery := exec.Command("pacman", "-Qs")
-	pacmanQuery.Stdout = &pacmanOutput
+	cmd := exec.Command("pacman", "-Qs")
+	cmd.Stdout = &buf
 
-	// Run query.
-	err := pacmanQuery.Run()
-	if err != nil {
+	if err := cmd.Run(); err != nil {
 		return nil, err
 	}
 
 	// Trim possibly leading and trailing space.
-	pkgsListRaw := strings.TrimSpace(pacmanOutput.String())
+	pkgsListRaw := strings.TrimSpace(buf.String())
 
 	// Split at newline.
 	pkgsList := strings.Split(pkgsListRaw, "\n")
 
-	// Reserve space for final package list.
-	pkgs := make([]Package, 0, (len(pkgsList) / 2))
+	pkgs := make([]Package, 0, len(pkgsList)/2)
 
 	for _, pkgLine := range pkgsList {
-
-		if strings.HasPrefix(pkgLine, "    ") != true {
+		if !strings.HasPrefix(pkgLine, "    ") {
 
 			// This is not a package's description line because
 			// it does not begin with an indentation. Proceed.
@@ -150,13 +139,11 @@ func ListPackages() ([]Package, error) {
 			// its membership to package repositories.
 			pkgName := strings.Split(pkgData[0], "/")
 
-			// Now, we can create a new Package struct.
 			pkg := Package{
 				Name:    pkgName[1],
 				Version: pkgData[1],
 			}
 
-			// And append it to final pkgs list.
 			pkgs = append(pkgs, pkg)
 		}
 	}
