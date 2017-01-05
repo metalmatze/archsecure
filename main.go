@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
 	"strings"
+	"text/tabwriter"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -28,37 +30,39 @@ type Package struct {
 }
 
 func main() {
-
-	// Fetch all currently listed issues from Arch Linux's
-	// security issues tracker.
 	issues, err := ListIssues()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// Retrieve all locally installed packages including
-	// the specific version installed.
 	installedPkgs, err := ListPackages()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Printf("\nKNOWN ISSUES:\n-------------\n\n")
-	for _, i := range issues {
-		fmt.Printf("%+v\n", i)
-	}
-	fmt.Println()
+	const padding = 3
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', tabwriter.TabIndent)
 
-	fmt.Printf("\nINSTALLED PKGS (OFFICIAL REPOSITORIES):\n---------------------------------------\n\n")
-	for index, p := range installedPkgs {
+	fmt.Fprintln(w, "Package\tVersion\tFixed\tSeverity\tStatus\tGroup")
 
-		if index < 100 {
-			fmt.Printf("%+v\n", p)
-		} else if index == 100 {
-			fmt.Printf("... (showing: 100, in total: %d) ...\n", len(installedPkgs))
+	for _, pkg := range installedPkgs {
+		for _, issue := range issues {
+			for _, issuePkg := range issue.Package {
+				if pkg.Name == issuePkg && pkg.Version == issue.Version {
+					fmt.Fprintf(w,
+						"%s\t%s\t%s\t%s\t%s\t%s\n",
+						pkg.Name,
+						pkg.Version,
+						issue.Fixed,
+						issue.Severity,
+						issue.Status,
+						issue.Group,
+					)
+				}
+			}
 		}
 	}
-	fmt.Println()
+	w.Flush()
 }
 
 func ListIssues() ([]Issue, error) {
