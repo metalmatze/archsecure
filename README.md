@@ -23,6 +23,17 @@ or in terminals with color:
 
 ## Installation
 
+### From AUR
+
+I've made the program available on AUR: https://aur.archlinux.org/packages/archsecure-git/
+If you have e.g. [pacaur](https://aur.archlinux.org/packages/pacaur/) installed you can simply run:
+
+```
+$ pacaur -S archsecure
+```
+
+### From Source
+
 You need to have a working [Go](https://golang.org/) installation on [Arch Linux](https://www.archlinux.org/) for this script to work. To install Go, run
 
 ```
