@@ -54,7 +54,7 @@ func main() {
 	const padding = 3
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', tabwriter.TabIndent)
 
-	fmt.Fprintln(w, "Package\tVersion\tFixed\tSeverity\tStatus\tGroup\tLink")
+	fmt.Fprintln(w, "PACKAGE\tVERSION\tFIXED\tSEVERITY\tSTATUS\tGROUP\tLINK")
 
 	for _, pkg := range installedPkgs {
 		for _, issue := range issues {
