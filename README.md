@@ -25,7 +25,7 @@ or in terminals with color:
 
 ### From AUR
 
-I've made the program available on AUR: https://aur.archlinux.org/packages/archsecure-git/
+I've made the program available on AUR: https://aur.archlinux.org/packages/archsecure-git/  
 If you have e.g. [pacaur](https://aur.archlinux.org/packages/pacaur/) installed you can simply run:
 
 ```
