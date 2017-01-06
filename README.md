@@ -1,8 +1,8 @@
 # archsecure
 
-Check you machine for Issues posted on https://security.archlinux.org/.  
-This will simply get & parse the table on the website and then get all local packages and match packages & versions.  
-If matches are found they will be printed to you like:
+Check your machine for issues posted on Arch Linux's [security issue tracker](https://security.archlinux.org/). This will simply fetch and parse the table hosted on the website, retrieve all your locally installed packages and match packages and versions.
+
+If matches are found they will be printed like this:
 
 ```
 Package                     Version      Fixed     Severity   Status         Group     Link
@@ -16,30 +16,40 @@ openjpeg2                   2.1.2-2                High       Vulnerable     AVG
 openssl                     1.0.2.j-1              Low        Vulnerable     AVG-67    https://security.archlinux.org/AVG-67
 ```
 
-or in terminals also with color:
+or in terminals with color:
 
 ![](screenshot.png)
 
+
 ## Installation
 
-All you need is Go. `sudo pacman -S go`.
-Setup your `$GOPATH` and also don't forget to add `export PATH=$PATH:$GOPATH/bin` so the binary will be globally available.  
-Please check the Wiki for more details: https://wiki.archlinux.org/index.php/Go
+You need to have a working [Go](https://golang.org/) installation on [Arch Linux](https://www.archlinux.org/) for this script to work. To install Go, run
 
-Now simply _go get_ archsecure.
-
-```bash
-go get github.com/metalmatze/archsecure
 ```
+$ sudo pacman -S go
+```
+
+Set up your `$GOPATH` and also don't forget to add `export PATH=$PATH:$GOPATH/bin` to your file of choice that will be sourced during terminal startup. This will allow to call the binary globally. For further information, please check the [wiki](https://wiki.archlinux.org/index.php/Go).
+
+To retrieve `archsecure`, simply run:
+
+```
+$ go get github.com/metalmatze/archsecure
+```
+
 
 ## Run 
 
-```bash
-archsecure
+```
+$ archsecure
 ```
 
+
 ## Contributing
-Fork -> Patch -> Push -> Pull Request
+
+Fork → Patch → Push → Pull Request
+
 
 ## License
-This project is under the GPLv3 License. See the [LICENSE](LICENSE) file for the full license text.
+
+This project is under the GPLv3 License. See [LICENSE](LICENSE) file for full license text.
